@@ -1,58 +1,74 @@
-const {
-  default: makeWASocket,
-  useSingleFileAuthState,
-  fetchLatestBaileysVersion,
-  DisconnectReason
-} = require('@whiskeysockets/baileys');
-const { Boom } = require('@hapi/boom');
-const fs = require('fs');
+const { default: makeWASocket, useSingleFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const qrcode = require('qrcode-terminal'); // Adicionado para melhor visualização do QR
+const path = require('path');
 
-const authFile = './auth_info.json';
+// Configuração de autenticação
+const authFile = path.join(__dirname, 'auth_info.json');
 const { state, saveState } = useSingleFileAuthState(authFile);
 
-async function startBot() {
-  const { version, isLatest } = await fetchLatestBaileysVersion();
-  console.log(`✅ Usando versão: ${version.join('.')} (última? ${isLatest})`);
+// Configuração de reconexão
+const reconnectInterval = 5000; // 5 segundos
 
+async function connectToWhatsApp() {
+  console.log('🚀 Iniciando bot...');
+  
   const sock = makeWASocket({
-    version,
     auth: state,
-    printQRInTerminal: true
+    printQRInTerminal: true,
+    logger: console, // Habilita logs detalhados
+    browser: ['Bot WhatsApp', 'Chrome', '1.0.0'] // Metadata da conexão
   });
 
+  // Salva credenciais automaticamente
   sock.ev.on('creds.update', saveState);
 
-  sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
-    if (connection === 'close') {
-      const shouldReconnect =
-        (lastDisconnect.error instanceof Boom
-          ? lastDisconnect.error.output.statusCode
-          : 0) !== DisconnectReason.loggedOut;
-
-      console.log('🔌 Desconectado → Reconectar?', shouldReconnect);
-      if (shouldReconnect) startBot();
-    }
-
-    if (connection === 'open') {
-      console.log('✅ Conectado ao WhatsApp com sucesso!');
-    }
-  });
-
-  sock.ev.on('messages.upsert', async ({ messages }) => {
+  // Tratamento de mensagens
+  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    if (type !== 'notify') return;
+    
     const msg = messages[0];
-    if (!msg.message || msg.key.fromMe) return;
-
+    if (!msg.message) return;
+    
     const sender = msg.key.remoteJid;
-    const content = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+    const text = msg.message.conversation || 
+                msg.message.extendedTextMessage?.text ||
+                '';
 
-    if (content.toLowerCase() === 'oi') {
-      await sock.sendMessage(sender, { text: 'Olá! Como posso te ajudar? 🤖' });
-    }
-
-    if (content.toLowerCase() === 'ping') {
-      await sock.sendMessage(sender, { text: 'pong 🏓' });
+    // Comando simples
+    if (text.toLowerCase() === '!ping') {
+      await sock.sendMessage(sender, { text: '🏓 pong!' });
     }
   });
+
+  // Tratamento de conexão
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect, qr } = update;
+    
+    if (qr) {
+      qrcode.generate(qr, { small: true }); // Mostra QR no terminal
+    }
+
+    if (connection === 'close') {
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      
+      if (statusCode === DisconnectReason.loggedOut) {
+        console.log('❌ Dispositivo deslogado! Delete auth_info.json e escaneie novamente.');
+        fs.unlinkSync(authFile); // Remove arquivo de autenticação
+      } else {
+        console.log(`⚡ Reconectando em ${reconnectInterval/1000}s...`);
+        setTimeout(connectToWhatsApp, reconnectInterval);
+      }
+    } else if (connection === 'open') {
+      console.log('✅ Conectado com sucesso ao WhatsApp!');
+    }
+  });
+
+  return sock;
 }
 
-startBot();
+// Inicia o bot com tratamento de erros
+connectToWhatsApp()
+  .catch(err => {
+    console.error('❌ Erro crítico:', err);
+    process.exit(1); // Encerra o processo com erro
+  });
