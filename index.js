@@ -1,75 +1,63 @@
-// index.js
-const { default: makeWASocket, useSingleFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
-const P = require("pino");
-const { Boom } = require("@hapi/boom");
+import makeWASocket, {
+  useSingleFileAuthState,
+  fetchLatestBaileysVersion,
+  DisconnectReason
+} from '@whiskeysockets/baileys'
+import { Boom } from '@hapi/boom'
+import fs from 'fs'
 
-// Caminho para salvar sessão (arquivo JSON)
-const authFile = "./auth_info.json";
-
-// Pega o estado de autenticação e função para salvar
-const { state, saveState } = useSingleFileAuthState(authFile);
+// Caminho onde será salva a sessão
+const authFile = './auth_info.json'
+const { state, saveState } = useSingleFileAuthState(authFile)
 
 async function startBot() {
-  try {
-    // Busca a versão mais recente do WhatsApp Web para Baileys (melhor compatibilidade)
-    const { version, isLatest } = await fetchLatestBaileysVersion();
+  const { version, isLatest } = await fetchLatestBaileysVersion()
+  console.log(`Usando versão do WhatsApp Web: ${version.join('.')}, latest: ${isLatest}`)
 
-    console.log(`Usando Baileys versão WhatsApp Web: ${version.join(".")} | Última? ${isLatest}`);
+  const sock = makeWASocket({
+    version,
+    auth: state,
+    printQRInTerminal: true,
+  })
 
-    const sock = makeWASocket({
-      version,
-      logger: P({ level: "silent" }), // ou "debug" para mais logs
-      printQRInTerminal: true, // imprime o QR no terminal
-      auth: state,
-      // Pode usar options adicionais aqui (ex: browser, userAgent)
-    });
+  // Salvar sessão
+  sock.ev.on('creds.update', saveState)
 
-    // Evento conexão: atualizações da conexão
-    sock.ev.on("connection.update", (update) => {
-      const { connection, lastDisconnect, qr } = update;
+  // Atualização de conexão
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect } = update
 
-      if (qr) {
-        console.log("📱 Novo QR code gerado, escaneie para logar!");
-      }
+    if (connection === 'close') {
+      const shouldReconnect = (lastDisconnect.error instanceof Boom
+        ? lastDisconnect.error.output.statusCode
+        : 0) !== DisconnectReason.loggedOut
 
-      if (connection === "close") {
-        const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
-        console.log("⚠️ Conexão fechada:", lastDisconnect?.error?.toString());
-        if (shouldReconnect) {
-          console.log("🔄 Tentando reconectar...");
-          startBot(); // reconecta automaticamente
-        } else {
-          console.log("❌ Sessão desconectada. Faça login novamente.");
-        }
-      } else if (connection === "open") {
-        console.log("✅ Conectado com sucesso!");
-      }
-    });
+      console.log("❌ Conexão encerrada", lastDisconnect?.error?.message || '', "→ Reconectar?", shouldReconnect)
 
-    // Evento de atualização das credenciais da sessão (para salvar no arquivo)
-    sock.ev.on("creds.update", saveState);
+      if (shouldReconnect) startBot()
+    }
 
-    // Exemplo simples: responder mensagem de texto "ping" com "pong"
-    sock.ev.on("messages.upsert", async (m) => {
-      // Somente mensagens novas
-      if (m.type !== "notify") return;
-      const msg = m.messages[0];
-      if (!msg.message || msg.key.fromMe) return; // ignorar mensagens enviadas pelo próprio bot
+    if (connection === 'open') {
+      console.log("✅ BOT conectado com sucesso ao WhatsApp")
+    }
+  })
 
-      const from = msg.key.remoteJid;
-      const messageContent = msg.message.conversation || msg.message.extendedTextMessage?.text;
+  // Resposta automática
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    const msg = messages[0]
+    if (!msg.message || msg.key.fromMe) return
 
-      if (!messageContent) return;
+    const sender = msg.key.remoteJid
+    const content = msg.message.conversation || msg.message.extendedTextMessage?.text
 
-      if (messageContent.toLowerCase() === "ping") {
-        await sock.sendMessage(from, { text: "pong" });
-      }
-    });
+    if (content?.toLowerCase() === 'oi') {
+      await sock.sendMessage(sender, { text: 'Olá! Como posso ajudar?' })
+    }
 
-  } catch (error) {
-    console.error("Erro ao iniciar o bot:", error);
-  }
+    if (content?.toLowerCase() === 'ping') {
+      await sock.sendMessage(sender, { text: 'pong 🏓' })
+    }
+  })
 }
 
-// Start
-startBot();
+startBot()
