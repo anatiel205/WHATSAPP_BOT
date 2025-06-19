@@ -1,12 +1,19 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
+  "description": "Bot WhatsApp usando Baileys para automação",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "author": "Seu Nome",
+  "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.18",
-    "pino": "^9.7.0"
+    "@whiskeysockets/baileys": "^6.7.0",
+    "pino": "^8.13.1",
+    "@hapi/boom": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
