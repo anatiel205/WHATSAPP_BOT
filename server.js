@@ -1,32 +1,26 @@
 // server.js
+
 const express = require("express");
 const path = require("path");
-const fileUpload = require("express-fileupload");
 const app = express();
-const port = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000;
 
-// Middlewares
+// 1️⃣ Configurações globais
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(fileUpload({
-  limits: { fileSize: 100 * 1024 * 1024 },
-  useTempFiles: true,
-  tempFileDir: "/tmp/"
-}));
 
-// 🟣 Serve arquivos estáticos (frontend)
+// 2️⃣ Servir arquivos estáticos (HTML, CSS, JS, imagens)
 app.use(express.static(path.join(__dirname, "public")));
 
-// 🟣 Página principal (painel)
+// 3️⃣ Rota principal (renderiza o painel)
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 🟣 Rotas da API do bot
-const whatsappRoutes = require("./routes/whatsapp");
-app.use("/api", whatsappRoutes);
+// 4️⃣ Importa lógica principal do bot
+require("./index.js");
 
-// 🟢 Inicia o servidor
-app.listen(port, () => {
-  console.log(`✅ Servidor rodando em http://localhost:${port}`);
+// 5️⃣ Inicia o servidor
+app.listen(PORT, () => {
+  console.log(`🟢 Painel e servidor rodando na porta ${PORT}`);
 });
