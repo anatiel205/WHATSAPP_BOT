@@ -16,3 +16,6 @@
     "pino": "^9.7.0"
   }
 }
+"scripts": {
+  "start": "node server.js"
+}
