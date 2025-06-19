@@ -2,6 +2,7 @@
 
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -31,7 +32,6 @@ app.get("/api/qr", (req, res) => {
 // 🤖 Inicia o bot do WhatsApp
 const { default: makeWASocket, useSingleFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 const { Boom } = require("@hapi/boom");
-const fs = require("fs");
 
 // 🛡️ Autenticação do Baileys
 const { state, saveState } = useSingleFileAuthState("./auth.json");
