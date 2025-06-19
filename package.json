@@ -6,13 +6,7 @@
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [
-    "whatsapp",
-    "baileys",
-    "bot",
-    "loja",
-    "automacao"
-  ],
+  "keywords": [],
   "author": "Anatiel Felipe",
   "license": "MIT",
   "dependencies": {
