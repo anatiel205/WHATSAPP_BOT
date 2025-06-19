@@ -1,54 +1,58 @@
-const { default: makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion, DisconnectReason } = require('@whiskeysockets/baileys')
-const { Boom } = require('@hapi/boom')
-const fs = require('fs')
+const {
+  default: makeWASocket,
+  useSingleFileAuthState,
+  fetchLatestBaileysVersion,
+  DisconnectReason
+} = require('@whiskeysockets/baileys');
+const { Boom } = require('@hapi/boom');
+const fs = require('fs');
 
-const authFile = './auth_info.json'
-const { state, saveState } = useSingleFileAuthState(authFile)
+const authFile = './auth_info.json';
+const { state, saveState } = useSingleFileAuthState(authFile);
 
 async function startBot() {
-  const { version, isLatest } = await fetchLatestBaileysVersion()
-  console.log(`✅ Versão do WhatsApp Web: ${version.join('.')} (latest: ${isLatest})`)
+  const { version, isLatest } = await fetchLatestBaileysVersion();
+  console.log(`✅ Usando versão: ${version.join('.')} (última? ${isLatest})`);
 
   const sock = makeWASocket({
     version,
     auth: state,
     printQRInTerminal: true
-  })
+  });
 
-  sock.ev.on('creds.update', saveState)
+  sock.ev.on('creds.update', saveState);
 
   sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
     if (connection === 'close') {
       const shouldReconnect =
         (lastDisconnect.error instanceof Boom
           ? lastDisconnect.error.output.statusCode
-          : 0) !== DisconnectReason.loggedOut
+          : 0) !== DisconnectReason.loggedOut;
 
-      console.log('❌ Desconectado', lastDisconnect?.error?.message, '→ Reconnect?', shouldReconnect)
-
-      if (shouldReconnect) startBot()
+      console.log('🔌 Desconectado → Reconectar?', shouldReconnect);
+      if (shouldReconnect) startBot();
     }
 
     if (connection === 'open') {
-      console.log('✅ Conectado ao WhatsApp com sucesso!')
+      console.log('✅ Conectado ao WhatsApp com sucesso!');
     }
-  })
+  });
 
   sock.ev.on('messages.upsert', async ({ messages }) => {
-    const msg = messages[0]
-    if (!msg.message || msg.key.fromMe) return
+    const msg = messages[0];
+    if (!msg.message || msg.key.fromMe) return;
 
-    const sender = msg.key.remoteJid
-    const content = msg.message.conversation || msg.message.extendedTextMessage?.text || ''
+    const sender = msg.key.remoteJid;
+    const content = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
 
     if (content.toLowerCase() === 'oi') {
-      await sock.sendMessage(sender, { text: 'Olá! Em que posso te ajudar? 🤖' })
+      await sock.sendMessage(sender, { text: 'Olá! Como posso te ajudar? 🤖' });
     }
 
     if (content.toLowerCase() === 'ping') {
-      await sock.sendMessage(sender, { text: 'pong 🏓' })
+      await sock.sendMessage(sender, { text: 'pong 🏓' });
     }
-  })
+  });
 }
 
-startBot()
+startBot();
