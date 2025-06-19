@@ -1,21 +1,24 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
-  "description": "🤖 Bot para enviar produtos automaticamente via WhatsApp",
+  "description": "🤖 Bot para envio automático de produtos da loja via WhatsApp",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [
+    "whatsapp",
+    "baileys",
+    "bot",
+    "loja",
+    "automacao"
+  ],
   "author": "Anatiel Felipe",
   "license": "MIT",
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "^6.7.18",
-    "qrcode-terminal": "^0.12.0",
-    "node-fetch": "^3.4.0",
-    "pino": "^9.7.0"
+    "pino": "^9.7.0",
+    "qrcode-terminal": "^0.12.0"
   }
-}
-"scripts": {
-  "start": "node server.js"
 }
