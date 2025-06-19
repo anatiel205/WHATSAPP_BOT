@@ -1,12 +1,7 @@
-const baileys = require('@whiskeysockets/baileys')
-const makeWASocket = baileys.default
-const { DisconnectReason, fetchLatestBaileysVersion } = baileys
+const { default: makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion, DisconnectReason } = require('@whiskeysockets/baileys')
 const P = require('pino')
 
-// CORRETO: importar via default (compatível com CommonJS)
-const auth = require('@whiskeysockets/baileys/lib/Auth')
-const { useSingleFileAuthState } = auth
-
+// Estado de autenticação salvo no arquivo JSON
 const { state, saveState } = useSingleFileAuthState('./auth_info.json')
 
 async function iniciarBot() {
