@@ -1,14 +1,17 @@
 const baileys = require('@whiskeysockets/baileys')
 const makeWASocket = baileys.default
-const { useSingleFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = baileys
+const { DisconnectReason, fetchLatestBaileysVersion } = baileys
 const P = require('pino')
 
-// Autenticação
+// CORRETO: importar via default (compatível com CommonJS)
+const auth = require('@whiskeysockets/baileys/lib/Auth')
+const { useSingleFileAuthState } = auth
+
 const { state, saveState } = useSingleFileAuthState('./auth_info.json')
 
 async function iniciarBot() {
   const { version, isLatest } = await fetchLatestBaileysVersion()
-  console.log(`🔄 Baileys usando WhatsApp v${version.join('.')}, é a última? ${isLatest}`)
+  console.log(`✅ Baileys v${version.join('.')} | Última versão? ${isLatest}`)
 
   const sock = makeWASocket({
     version,
@@ -23,12 +26,10 @@ async function iniciarBot() {
     const { connection, lastDisconnect } = update
     if (connection === 'close') {
       const shouldReconnect = (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut)
-      console.log('❌ Desconectado. Reconectando?', shouldReconnect)
-      if (shouldReconnect) {
-        iniciarBot()
-      }
+      console.log('❌ Desconectado. Reconectar? ', shouldReconnect)
+      if (shouldReconnect) iniciarBot()
     } else if (connection === 'open') {
-      console.log('✅ Conectado ao WhatsApp com sucesso!')
+      console.log('🎉 Bot conectado com sucesso ao WhatsApp!')
     }
   })
 }
