@@ -1,7 +1,7 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
-  "description": "🤖 Bot para envio automático de produtos da loja via WhatsApp",
+  "description": "🤖 Bot de loja no WhatsApp usando Baileys",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
