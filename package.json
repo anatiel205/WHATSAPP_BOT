@@ -1,14 +1,10 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
-  "description": "🤖 Bot de loja no WhatsApp usando Baileys",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [],
-  "author": "Anatiel Felipe",
-  "license": "MIT",
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
     "pino": "^9.7.0"
