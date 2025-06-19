@@ -1,13 +1,10 @@
-const { default: makeWASocket, fetchLatestBaileysVersion, useSingleFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys')
+const { default: makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion, DisconnectReason } = require('@whiskeysockets/baileys')
 const P = require('pino')
 const fs = require('fs')
 const path = require('path')
-const qrcode = require('qrcode-terminal')
 
-// Criar pasta auth se não existir
-if (!fs.existsSync('./auth')) fs.mkdirSync('./auth')
-
-const { state, saveState } = useSingleFileAuthState('./auth/session.json')
+const authFile = './auth_info.json'
+const { state, saveState } = useSingleFileAuthState(authFile)
 
 async function iniciarBot() {
   const { version, isLatest } = await fetchLatestBaileysVersion()
@@ -15,22 +12,23 @@ async function iniciarBot() {
 
   const sock = makeWASocket({
     version,
-    printQRInTerminal: true,
-    auth: state,
     logger: P({ level: 'silent' }),
+    printQRInTerminal: true,
+    auth: state
   })
 
   sock.ev.on('creds.update', saveState)
 
-  sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect } = update
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-      console.log('❌ Conexão fechada.', shouldReconnect ? 'Reconectando...' : 'Deslogado permanentemente.')
-      if (shouldReconnect) iniciarBot()
-    }
-
-    if (connection === 'open') {
-      console.log('✅ Bot conectado com sucesso!')
+      console.log('❌ Conexão fechada', { motivo: lastDisconnect?.error, reconectar: shouldReconnect })
+      if (shouldReconnect) {
+        iniciarBot()
+      }
+    } else if (connection === 'open') {
+      console.log('✅ Conectado com sucesso ao WhatsApp!')
     }
   })
 }
