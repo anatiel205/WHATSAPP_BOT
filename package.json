@@ -1,13 +1,25 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
-  "description": "Bot WhatsApp com Baileys",
+  "description": "Bot de atendimento automático via WhatsApp usando Baileys",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "nodejs",
+    "automação"
+  ],
+  "author": "anatiel205",
+  "license": "MIT",
   "dependencies": {
-    "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "^6.6.0"
+    "@whiskeysockets/baileys": "^6.6.0",
+    "@hapi/boom": "^10.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
