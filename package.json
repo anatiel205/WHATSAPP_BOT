@@ -1,9 +1,8 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
-  "description": "Bot de WhatsApp usando Baileys",
+  "description": "Bot WhatsApp com Baileys",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
