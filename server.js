@@ -1,61 +1,32 @@
-const express = require('express')
-const http = require('http')
-const { Server } = require('socket.io')
-const fs = require('fs')
-const path = require('path')
-const qrcode = require('qrcode')
+// server.js
+const express = require("express");
+const path = require("path");
+const fileUpload = require("express-fileupload");
+const app = express();
+const port = process.env.PORT || 10000;
 
-const { default: makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys')
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(fileUpload({
+  limits: { fileSize: 100 * 1024 * 1024 },
+  useTempFiles: true,
+  tempFileDir: "/tmp/"
+}));
 
-const app = express()
-const server = http.createServer(app)
-const io = new Server(server)
+// 🟣 Serve arquivos estáticos (frontend)
+app.use(express.static(path.join(__dirname, "public")));
 
-const PORT = process.env.PORT || 3000
+// 🟣 Página principal (painel)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
 
-app.set('view engine', 'ejs')
-app.set('views', path.join(__dirname, 'views'))
+// 🟣 Rotas da API do bot
+const whatsappRoutes = require("./routes/whatsapp");
+app.use("/api", whatsappRoutes);
 
-app.use(express.static(path.join(__dirname, 'public')))
-
-const { state, saveState } = useSingleFileAuthState('./auth/session.json')
-
-async function iniciarBot(io) {
-  const { version } = await fetchLatestBaileysVersion()
-
-  const sock = makeWASocket({
-    version,
-    printQRInTerminal: false,
-    auth: state,
-  })
-
-  sock.ev.on('creds.update', saveState)
-
-  sock.ev.on('connection.update', (update) => {
-    const { qr, connection } = update
-    if (qr) {
-      qrcode.toDataURL(qr, (err, url) => {
-        if (!err) {
-          io.emit('qr', url)
-        }
-      })
-    }
-
-    if (connection === 'open') {
-      io.emit('ready', '✅ Bot conectado com sucesso!')
-    }
-  })
-}
-
-io.on('connection', () => {
-  console.log('🖥️ Novo cliente conectado ao painel')
-})
-
-app.get('/', (req, res) => {
-  res.render('index')
-})
-
-server.listen(PORT, () => {
-  console.log(`🚀 Painel rodando em http://localhost:${PORT}`)
-  iniciarBot(io)
-})
+// 🟢 Inicia o servidor
+app.listen(port, () => {
+  console.log(`✅ Servidor rodando em http://localhost:${port}`);
+});
