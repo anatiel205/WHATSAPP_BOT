@@ -1,18 +1,31 @@
 {
   "name": "whatsapp-loja-bot",
   "version": "1.0.0",
+  "description": "Bot de WhatsApp via Baileys com rotas Express para envio de vídeos, imagens e mensagens.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "clean-install": "rm -rf node_modules package-lock.json && npm install"
+    "start": "node index.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "baileys",
+    "express",
+    "bot",
+    "mensagem",
+    "upload",
+    "api",
+    "chatbot"
+  ],
+  "author": "Anatiel Felipe",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.6.0", // Versão fixa
-    "qrcode-terminal": "0.12.0",
-    "express": "4.18.2",
-    "dotenv": "16.0.3"
-  },
-  "engines": {
-    "node": "18.x" // Especificando versão exata
+    "@whiskeysockets/baileys": "^6.7.1",
+    "axios": "^1.6.7",
+    "express": "^4.18.4",
+    "express-fileupload": "^1.4.0",
+    "qrcode-terminal": "^0.12.0"
   }
 }
