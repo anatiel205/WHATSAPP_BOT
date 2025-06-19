@@ -1,7 +1,11 @@
-// ✅ Usa crypto nativo do Node.js (essencial para ambiente como Render)
-global.crypto = require("crypto").webcrypto;
+// ===============================
+// index.js - Servidor WhatsApp Bot
+// ===============================
 
-// 🧩 Dependências
+// Usa crypto nativo do Node.js (não precisa de node-webcrypto-ossl)
+global.crypto = require('crypto').webcrypto;
+
+// Importa dependências
 const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
 const qrcode = require("qrcode-terminal");
 const express = require("express");
@@ -12,30 +16,30 @@ const axios = require("axios");
 const app = express();
 const port = process.env.PORT || 3000;
 
-let sock;
+let sock; // Socket do WhatsApp
 
-// 🧹 Limpa sessão anterior (caso necessário, pode comentar)
+// Limpa sessão antiga (opcional)
 if (fs.existsSync("./auth_info")) {
   fs.rmSync("./auth_info", { recursive: true, force: true });
   console.log("🧹 Sessão anterior removida.");
 }
 
-// ⚙️ Middlewares
+// Middlewares para upload e JSON
 app.use(fileUpload({
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  limits: { fileSize: 100 * 1024 * 1024 },
   useTempFiles: true,
   tempFileDir: "/tmp/"
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🤖 Inicializa conexão WhatsApp
+// Inicializa a conexão com WhatsApp
 async function startSock() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
 
   sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true
+    printQRInTerminal: false, // Evita warning de função descontinuada
   });
 
   sock.ev.on("creds.update", saveCreds);
@@ -46,60 +50,59 @@ async function startSock() {
       qrcode.generate(qr, { small: true });
     }
     if (connection === "open") {
-      console.log("✅ Conectado ao WhatsApp!");
+      console.log("✅ WhatsApp conectado com sucesso!");
     }
     if (connection === "close") {
-      console.log("🔌 Conexão encerrada. Tentando reconectar...");
+      console.log("❌ Conexão encerrada. Tentando reconectar...");
       startSock();
     }
   });
 }
+
 startSock();
 
+// =========================
+// Rotas da API REST
+// =========================
 
-// 📩 Enviar texto simples
-app.post("/send-text", async (req, res) => {
-  if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
-  const { to, message } = req.body;
-  if (!to || !message) return res.status(400).send("⚠️ Parâmetros 'to' e 'message' são obrigatórios.");
-
-  try {
-    await sock.sendMessage(to, { text: message });
-    res.send("✅ Mensagem enviada com sucesso!");
-  } catch (err) {
-    console.error("❌ Erro ao enviar mensagem:", err);
-    res.status(500).send("Erro ao enviar mensagem.");
-  }
-});
-
-
-// 🎥 Enviar vídeo com legenda via upload
+// Enviar vídeo via upload
 app.post("/send-video", async (req, res) => {
   if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
+
   const { grupo, legenda } = req.body;
   const arquivo = req.files?.file;
-  if (!grupo || !arquivo) return res.status(400).send("⚠️ Parâmetros obrigatórios 'grupo' e 'file' ausentes.");
+
+  if (!grupo || !arquivo) {
+    return res.status(400).send("⚠️ Parâmetros obrigatórios 'grupo' e 'file' ausentes.");
+  }
 
   try {
-    const buffer = fs.readFileSync(arquivo.tempFilePath || arquivo.data);
+    const buffer = arquivo.tempFilePath
+      ? fs.readFileSync(arquivo.tempFilePath)
+      : arquivo.data;
+
     await sock.sendMessage(grupo, {
       video: buffer,
       mimetype: "video/mp4",
       caption: legenda || ""
     });
+
     res.send("✅ Vídeo enviado com sucesso!");
   } catch (err) {
-    console.error("❌ Erro ao enviar vídeo:", err);
+    console.error("Erro ao enviar vídeo:", err);
     res.status(500).send("Erro ao enviar vídeo.");
   }
 });
 
-
-// 🖼️ Enviar imagem via URL
+// Enviar imagem via URL
 app.post("/send-image", async (req, res) => {
   if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
+
   const { to, imageUrl, caption } = req.body;
-  if (!to || !imageUrl) return res.status(400).send("⚠️ Parâmetros 'to' e 'imageUrl' obrigatórios.");
+
+  if (!to || !imageUrl) {
+    return res.status(400).send("⚠️ Parâmetros obrigatórios 'to' e 'imageUrl' ausentes.");
+  }
 
   try {
     const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
@@ -112,13 +115,31 @@ app.post("/send-image", async (req, res) => {
 
     res.send("✅ Imagem enviada com sucesso!");
   } catch (err) {
-    console.error("❌ Erro ao enviar imagem:", err);
+    console.error("Erro ao enviar imagem:", err);
     res.status(500).send("Erro ao enviar imagem.");
   }
 });
 
+// Enviar texto simples
+app.post("/send-text", async (req, res) => {
+  if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
 
-// 🧾 Listar grupos
+  const { to, texto } = req.body;
+
+  if (!to || !texto) {
+    return res.status(400).send("⚠️ Parâmetros obrigatórios 'to' e 'texto' ausentes.");
+  }
+
+  try {
+    await sock.sendMessage(to, { text: texto });
+    res.send("✅ Texto enviado com sucesso!");
+  } catch (err) {
+    console.error("Erro ao enviar texto:", err);
+    res.status(500).send("Erro ao enviar texto.");
+  }
+});
+
+// Listar grupos onde o bot participa
 app.get("/groups", async (req, res) => {
   if (!sock) return res.status(500).json({ error: "❌ WhatsApp não conectado." });
 
@@ -135,8 +156,38 @@ app.get("/groups", async (req, res) => {
   }
 });
 
+// Enviar produto da loja com imagem e legenda fixa
+app.post("/send-product", async (req, res) => {
+  if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
 
-// 🚀 Inicia o servidor
+  const { to, produtoUrl, legendaFixa } = req.body;
+
+  if (!to || !produtoUrl) {
+    return res.status(400).send("⚠️ Parâmetros obrigatórios 'to' e 'produtoUrl' ausentes.");
+  }
+
+  try {
+    // Exemplo: pega os dados do produto via API ou scraping (substituir pela sua implementação)
+    const produtoData = await axios.get(produtoUrl); // Exemplo, ajuste conforme necessário
+    // Vamos supor que produtoData tenha { imagem, titulo, preco }
+
+    const imagemBuffer = Buffer.from(await axios.get(produtoData.data.imagem, { responseType: "arraybuffer" }).then(res => res.data));
+
+    const mensagem = `${produtoData.data.titulo}\nPreço: ${produtoData.data.preco}\n\n${legendaFixa || ""}`;
+
+    await sock.sendMessage(to, {
+      image: imagemBuffer,
+      caption: mensagem
+    });
+
+    res.send("✅ Produto enviado com sucesso!");
+  } catch (err) {
+    console.error("Erro ao enviar produto:", err);
+    res.status(500).send("Erro ao enviar produto.");
+  }
+});
+
+// Inicia o servidor Express
 app.listen(port, () => {
   console.log(`🟢 Servidor rodando na porta ${port}`);
 });
