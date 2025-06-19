@@ -1,390 +1,209 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel BOT_DO_WHATSAPP</title>
-  <style>
-    /* Reset básico */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background-color: #121212;
-      color: #e0d7f5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    /* Navbar */
-    nav {
-      height: 60px;
-      background: #3a0ca3;
-      color: white;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      font-weight: 700;
-      font-size: 1.3rem;
-      letter-spacing: 1px;
-      box-shadow: 0 2px 5px rgba(58,12,163,0.6);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    /* Layout geral */
-    .container {
-      display: flex;
-      flex: 1;
-      height: calc(100vh - 60px);
-      overflow: hidden;
-    }
-    /* Menu lateral */
-    aside {
-      width: 250px;
-      background: #240046;
-      display: flex;
-      flex-direction: column;
-      padding-top: 20px;
-      transition: transform 0.3s ease;
-    }
-    aside.closed {
-      transform: translateX(-100%);
-      position: absolute;
-      z-index: 200;
-    }
-    aside nav a {
-      color: #e0d7f5;
-      padding: 15px 25px;
-      text-decoration: none;
-      font-weight: 600;
-      border-left: 4px solid transparent;
-      transition: background 0.3s, border-color 0.3s;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    aside nav a:hover,
-    aside nav a.active {
-      background: #5f259f;
-      border-left-color: #c77dff;
-    }
-    /* Conteúdo principal */
-    main {
-      flex: 1;
-      padding: 25px 30px;
-      overflow-y: auto;
-    }
-    /* Header do main */
-    main h1 {
-      margin-bottom: 25px;
-      color: #c77dff;
-      font-weight: 800;
-      font-size: 2rem;
-      letter-spacing: 1px;
-    }
-    /* Formulários e cards */
-    .card {
-      background: #1b0737;
-      padding: 25px 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(199,125,255,0.3);
-      margin-bottom: 25px;
-      max-width: 600px;
-    }
-    .card h2 {
-      margin-bottom: 15px;
-      color: #9f6fff;
-      font-weight: 700;
-      font-size: 1.3rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #d4c1ff;
-    }
-    input[type="text"],
-    input[type="url"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      border: none;
-      font-size: 1rem;
-      background: #3a0ca3;
-      color: white;
-      transition: background 0.3s;
-    }
-    input[type="text"]:focus,
-    input[type="url"]:focus,
-    input[type="number"]:focus,
-    textarea:focus,
-    select:focus {
-      outline: none;
-      background: #5f259f;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-    button {
-      background: #c77dff;
-      color: #240046;
-      border: none;
-      padding: 12px 22px;
-      border-radius: 6px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background: #9f6fff;
-      color: white;
-    }
-    /* Toggle menu botão mobile */
-    .toggle-menu {
-      display: none;
-      position: absolute;
-      left: 20px;
-      top: 15px;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
-      flex-direction: column;
-      justify-content: space-around;
-      z-index: 300;
-    }
-    .toggle-menu div {
-      width: 100%;
-      height: 4px;
-      background: white;
-      border-radius: 2px;
-    }
-    /* Responsividade */
-    @media (max-width: 768px) {
-      aside {
-        position: fixed;
-        height: 100vh;
-        z-index: 300;
-      }
-      .toggle-menu {
-        display: flex;
-      }
-      main {
-        padding-top: 50px;
-        padding-left: 20px;
-        padding-right: 20px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>WhatsApp Bot - Painel Mobile</title>
+<style>
+  /* Reset e estilos base */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+  body {
+    background-color: #121212;
+    color: #ddd;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  header {
+    background: linear-gradient(90deg, #6e4cff, #9b59b6);
+    padding: 1.2rem 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(107, 71, 255, 0.7);
+    user-select: none;
+  }
+  main {
+    flex-grow: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  footer {
+    text-align: center;
+    padding: 0.8rem 0;
+    background-color: #1a1a1a;
+    font-size: 0.85rem;
+    color: #666;
+  }
+</style>
 </head>
 <body>
-  <nav>
-    <div class="toggle-menu" id="toggleMenu" aria-label="Toggle menu" role="button" tabindex="0">
-      <div></div>
-      <div></div>
-      <div></div>
-    </div>
-    BOT_DO_WHATSAPP
-  </nav>
-  <div class="container">
-    <aside id="sidebar">
-      <nav>
-        <a href="#" class="active" data-section="sendVideo">📹 Enviar Vídeo</a>
-        <a href="#" data-section="sendImage">🖼️ Enviar Imagem</a>
-        <a href="#" data-section="sendProduct">🛒 Enviar Produto</a>
-        <a href="#" data-section="settings">⚙️ Configurações</a>
-      </nav>
-    </aside>
-    <main>
-      <section id="sendVideo" class="section">
-        <h1>Enviar Vídeo</h1>
-        <div class="card">
-          <h2>Enviar vídeo para grupo ou chat</h2>
-          <form id="formSendVideo">
-            <label for="groupVideo">ID do grupo ou chat</label>
-            <input type="text" id="groupVideo" name="group" placeholder="ex: 12345@g.us ou número" required />
-            <label for="captionVideo">Legenda</label>
-            <textarea id="captionVideo" name="caption" placeholder="Digite a legenda"></textarea>
-            <label for="videoFile">Arquivo de vídeo (mp4)</label>
-            <input type="file" id="videoFile" name="file" accept="video/mp4" required />
-            <button type="submit">Enviar Vídeo</button>
-          </form>
-          <p id="videoStatus" style="margin-top: 10px;"></p>
-        </div>
-      </section>
+<header>WhatsApp Bot - Painel Mobile</header>
+<main>
+  <section id="qr-section" style="
+  background: #1f1f1f;
+  border-radius: 16px;
+  padding: 1.4rem;
+  box-shadow: 0 0 18px #8e44adcc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+">
+  <h2 style="color:#9b59b6; margin-bottom:1rem; font-weight:600; font-size:1.3rem;">
+    Escaneie o QR Code
+  </h2>
+  <canvas id="qrcode" style="
+    width: 260px;
+    height: 260px;
+    background: #fff;
+    border-radius: 12px;
+  "></canvas>
+  <div id="status" style="
+    margin-top: 1rem;
+    color: #aaa;
+    font-size: 0.9rem;
+    text-align: center;
+  ">Aguardando conexão...</div>
+  </section>
+  <section id="config-section" style="
+  background: #1f1f1f;
+  border-radius: 16px;
+  box-shadow: 0 0 18px #6e4cffcc;
+  padding: 1.6rem 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  color: #ddd;
+">
+  <h2 style="color:#6e4cff; font-weight:600; margin-bottom:1rem; font-size:1.25rem;">
+    Configurações de Envio
+  </h2>
 
-      <section id="sendImage" class="section" style="display:none">
-        <h1>Enviar Imagem</h1>
-        <div class="card">
-          <h2>Enviar imagem via URL</h2>
-          <form id="formSendImage">
-            <label for="toImage">ID do grupo ou chat</label>
-            <input type="text" id="toImage" name="to" placeholder="ex: 12345@g.us ou número" required />
-            <label for="imageUrl">URL da imagem</label>
-            <input type="url" id="imageUrl" name="imageUrl" placeholder="https://exemplo.com/imagem.jpg" required />
-            <label for="captionImage">Legenda</label>
-            <textarea id="captionImage" name="caption" placeholder="Digite a legenda"></textarea>
-            <button type="submit">Enviar Imagem</button>
-          </form>
-          <p id="imageStatus" style="margin-top: 10px;"></p>
-        </div>
-      </section>
+  <label for="interval" style="font-weight:600; margin-bottom:0.4rem; display:block;">
+    Intervalo entre envios (segundos):
+  </label>
+  <input type="number" id="interval" min="1" max="3600" value="60" style="
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: none;
+    background-color: #292929;
+    color: #eee;
+    font-size: 1rem;
+    outline: none;
+    margin-bottom: 1rem;
+  " />
 
-      <section id="sendProduct" class="section" style="display:none">
-        <h1>Enviar Produto da Loja</h1>
-        <div class="card">
-          <h2>Enviar produtos do catálogo com legenda personalizada</h2>
-          <form id="formSendProduct">
-            <label for="productUrl">URL do produto (ex: https://loja.menu/eurodistribuidora/produto)</label>
-            <input type="url" id="productUrl" name="productUrl" placeholder="URL do produto" required />
-            <label for="productCaption">Legenda fixa para o produto</label>
-            <textarea id="productCaption" name="caption" placeholder="Legenda para o produto" required></textarea>
-            <label for="productTarget">ID do grupo ou chat para envio</label>
-            <input type="text" id="productTarget" name="target" placeholder="ex: 12345@g.us ou número" required />
-            <button type="submit">Enviar Produto</button>
-          </form>
-          <p id="productStatus" style="margin-top: 10px;"></p>
-        </div>
-      </section>
+  <label for="message" style="font-weight:600; margin-bottom:0.4rem; display:block;">
+    Legenda fixa para produtos:
+  </label>
+  <textarea id="message" rows="4" placeholder="Digite a legenda que será enviada junto com o produto..." style="
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: none;
+    background-color: #292929;
+    color: #eee;
+    font-size: 1rem;
+    outline: none;
+    resize: vertical;
+    margin-bottom: 1.4rem;
+  "></textarea>
 
-      <section id="settings" class="section" style="display:none">
-        <h1>Configurações</h1>
-        <div class="card">
-          <h2>Defina o intervalo entre envios</h2>
-          <form id="formSettings">
-            <label for="sendInterval">Intervalo entre posts (minutos)</label>
-            <input type="number" id="sendInterval" name="sendInterval" min="1" max="1440" value="5" required />
-            <button type="submit">Salvar Configurações</button>
-          </form>
-          <p id="settingsStatus" style="margin-top: 10px;"></p>
-        </div>
-      </section>
-    </main>
-  </div>
+  <button id="startBtn" style="
+    padding: 0.8rem 1.6rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: #9b59b6;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 15px #9b59b6aa;
+    transition: background 0.3s ease;
+    width: 100%;
+  " onmouseover="this.style.background='#6e4cff'; this.style.boxShadow='0 6px 20px #6e4cffcc';" 
+  onmouseout="this.style.background='#9b59b6'; this.style.boxShadow='0 4px 15px #9b59b6aa';">
+    Iniciar Envio
+  </button>
+  </section>
+  </main>
+<footer>Desenvolvido por Anatiel Felipe - 2025</footer>
 
-  <script>
-    // Menu toggle mobile
-    const toggleMenu = document.getElementById("toggleMenu");
-    const sidebar = document.getElementById("sidebar");
-    toggleMenu.addEventListener("click", () => {
-      sidebar.classList.toggle("closed");
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  let qrString = null;
+
+  function updateQRCode(text) {
+    const canvas = document.getElementById('qrcode');
+    QRCode.toCanvas(canvas, text, { width: 260 }, function (error) {
+      if (error) {
+        console.error(error);
+        document.getElementById('status').textContent = "Erro ao gerar QR code";
+      } else {
+        document.getElementById('status').textContent = "Escaneie o QR Code com o WhatsApp";
+      }
     });
+  }
 
-    // Navegação entre seções
-    const links = sidebar.querySelectorAll("nav a");
-    const sections = document.querySelectorAll(".section");
-
-    function showSection(id) {
-      sections.forEach(sec => {
-        sec.style.display = sec.id === id ? "block" : "none";
-      });
-      links.forEach(link => {
-        if(link.getAttribute("data-section") === id) {
-          link.classList.add("active");
-        } else {
-          link.classList.remove("active");
+  async function fetchQRCode() {
+    try {
+      const res = await fetch('/api/qr');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.qr && data.qr !== qrString) {
+          qrString = data.qr;
+          updateQRCode(qrString);
         }
-      });
+      } else {
+        document.getElementById('status').textContent = "Não conectado ao WhatsApp";
+      }
+    } catch (e) {
+      document.getElementById('status').textContent = "Erro ao buscar QR code";
     }
+  }
 
-    links.forEach(link => {
-      link.addEventListener("click", e => {
-        e.preventDefault();
-        const target = link.getAttribute("data-section");
-        showSection(target);
-        sidebar.classList.add("closed"); // Fecha menu no mobile após clicar
-      });
-    });
+  setInterval(fetchQRCode, 5000);
+  fetchQRCode();
 
-    // Inicializa mostrando sendVideo
-    showSection("sendVideo");
+  document.getElementById('startBtn').addEventListener('click', () => {
+    const interval = parseInt(document.getElementById('interval').value);
+    const message = document.getElementById('message').value.trim();
 
-    // Função auxiliar para enviar FormData via fetch POST
-    async function postFormData(url, formData) {
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          body: formData
-        });
-        return await res.text();
-      } catch (e) {
-        return "Erro na requisição: " + e.message;
-      }
+    if (!interval || interval < 1) {
+      alert('Informe um intervalo válido entre envios');
+      return;
     }
-// Formulário Enviar Vídeo
-    document.getElementById("formSendVideo").addEventListener("submit", async e => {
-      e.preventDefault();
-      const status = document.getElementById("videoStatus");
-      status.textContent = "Enviando vídeo...";
-      const form = e.target;
-      const data = new FormData(form);
-      const result = await postFormData("/send-video", data);
-      status.textContent = result;
-    });
+    if (!message) {
+      alert('Digite uma legenda fixa para os produtos');
+      return;
+    }
+    alert(`Iniciando envio com intervalo de ${interval} segundos e legenda: "${message}"`);
 
-    // Formulário Enviar Imagem
-    document.getElementById("formSendImage").addEventListener("submit", async e => {
-      e.preventDefault();
-      const status = document.getElementById("imageStatus");
-      status.textContent = "Enviando imagem...";
-      const form = e.target;
-      const data = new FormData(form);
-      const result = await postFormData("/send-image", data);
-      status.textContent = result;
-    });
-
-    // Formulário Enviar Produto
-    document.getElementById("formSendProduct").addEventListener("submit", async e => {
-      e.preventDefault();
-      const status = document.getElementById("productStatus");
-      status.textContent = "Enviando produto...";
-      const form = e.target;
-      const jsonBody = {
-        productUrl: form.productUrl.value,
-        caption: form.caption.value,
-        target: form.target.value,
-      };
-      try {
-        const res = await fetch("/send-product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(jsonBody),
-        });
-        const text = await res.text();
-        status.textContent = text;
-      } catch (error) {
-        status.textContent = "Erro ao enviar produto: " + error.message;
-      }
-    });
-
-    // Formulário Configurações
-    document.getElementById("formSettings").addEventListener("submit", e => {
-      e.preventDefault();
-      const status = document.getElementById("settingsStatus");
-      const interval = e.target.sendInterval.value;
-      localStorage.setItem("sendInterval", interval);
-      status.textContent = "Configurações salvas! Intervalo: " + interval + " minutos.";
-      setTimeout(() => (status.textContent = ""), 3000);
-    });
-
-    // Carregar intervalo salvo no localStorage ao iniciar
-    window.addEventListener("load", () => {
-      const savedInterval = localStorage.getItem("sendInterval");
-      if(savedInterval) {
-        document.getElementById("sendInterval").value = savedInterval;
-      }
-    });
-  </script>
+    // Exemplo de chamada para backend iniciar envio:
+    // fetch('/api/start', {
+    //   method: 'POST',
+    //   headers: {'Content-Type':'application/json'},
+    //   body: JSON.stringify({ interval, message })
+    // });
+  });
+</script>
 </body>
 </html>
+
+  
+  
