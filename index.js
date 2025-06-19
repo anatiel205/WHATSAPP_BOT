@@ -187,7 +187,3 @@ app.post("/send-product", async (req, res) => {
   }
 });
 
-// Inicia o servidor Express
-app.listen(port, () => {
-  console.log(`🟢 Servidor rodando na porta ${port}`);
-});
