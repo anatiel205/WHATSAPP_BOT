@@ -4,7 +4,9 @@
   "description": "Bot de atendimento automático via WhatsApp usando Baileys",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "fix-auth": "rm -rf auth_info.json"
   },
   "keywords": [
     "whatsapp",
@@ -17,9 +19,13 @@
   "license": "MIT",
   "dependencies": {
     "@whiskeysockets/baileys": "^6.6.0",
-    "@hapi/boom": "^10.0.1"
+    "qrcode-terminal": "^0.12.0",
+    "dotenv": "^16.0.3",
+    "pino": "^8.15.1",
+    "express": "^4.18.2"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }
