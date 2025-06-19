@@ -1,50 +1,142 @@
-// Importação correta para Baileys v6.6.0
-const { default: makeWASocket, useSingleFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const qrcode = require('qrcode-terminal');
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
+// ✅ Usa crypto nativo do Node.js (essencial para ambiente como Render)
+global.crypto = require("crypto").webcrypto;
 
-// Configurações essenciais
+// 🧩 Dependências
+const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const qrcode = require("qrcode-terminal");
+const express = require("express");
+const fileUpload = require("express-fileupload");
+const fs = require("fs");
+const axios = require("axios");
+
 const app = express();
-const PORT = process.env.PORT || 3000;
-const authFile = path.join(__dirname, 'auth_info.json');
+const port = process.env.PORT || 3000;
 
-// CORREÇÃO DEFINITIVA: Sintaxe correta para v6.6.0
-const authState = useSingleFileAuthState(authFile);
+let sock;
 
-// Keep-alive para Render
-app.get('/', (req, res) => res.send('Bot Ativo'));
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+// 🧹 Limpa sessão anterior (caso necessário, pode comentar)
+if (fs.existsSync("./auth_info")) {
+  fs.rmSync("./auth_info", { recursive: true, force: true });
+  console.log("🧹 Sessão anterior removida.");
+}
 
-async function startBot() {
-  const sock = makeWASocket({
-    auth: authState.state,
-    printQRInTerminal: true,
-    logger: { level: 'warn' }
+// ⚙️ Middlewares
+app.use(fileUpload({
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  useTempFiles: true,
+  tempFileDir: "/tmp/"
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 🤖 Inicializa conexão WhatsApp
+async function startSock() {
+  const { state, saveCreds } = await useMultiFileAuthState("auth_info");
+
+  sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true
   });
 
-  // Eventos
-  sock.ev.on('creds.update', authState.saveState);
-  
-  sock.ev.on('connection.update', (update) => {
-    if (update.qr) qrcode.generate(update.qr, { small: true });
-    
-    if (update.connection === 'close') {
-      const shouldReconnect = update.lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      if (shouldReconnect) setTimeout(startBot, 5000);
+  sock.ev.on("creds.update", saveCreds);
+
+  sock.ev.on("connection.update", ({ connection, qr }) => {
+    if (qr) {
+      console.log("📲 Escaneie o QR code:");
+      qrcode.generate(qr, { small: true });
     }
-  });
-
-  sock.ev.on('messages.upsert', async ({ messages }) => {
-    const msg = messages[0];
-    if (msg?.message?.conversation === '!ping') {
-      await sock.sendMessage(msg.key.remoteJid, { text: '🏓 Pong!' });
+    if (connection === "open") {
+      console.log("✅ Conectado ao WhatsApp!");
+    }
+    if (connection === "close") {
+      console.log("🔌 Conexão encerrada. Tentando reconectar...");
+      startSock();
     }
   });
 }
+startSock();
 
-startBot().catch(err => {
-  console.error('Erro inicial:', err);
-  process.exit(1);
+
+// 📩 Enviar texto simples
+app.post("/send-text", async (req, res) => {
+  if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
+  const { to, message } = req.body;
+  if (!to || !message) return res.status(400).send("⚠️ Parâmetros 'to' e 'message' são obrigatórios.");
+
+  try {
+    await sock.sendMessage(to, { text: message });
+    res.send("✅ Mensagem enviada com sucesso!");
+  } catch (err) {
+    console.error("❌ Erro ao enviar mensagem:", err);
+    res.status(500).send("Erro ao enviar mensagem.");
+  }
+});
+
+
+// 🎥 Enviar vídeo com legenda via upload
+app.post("/send-video", async (req, res) => {
+  if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
+  const { grupo, legenda } = req.body;
+  const arquivo = req.files?.file;
+  if (!grupo || !arquivo) return res.status(400).send("⚠️ Parâmetros obrigatórios 'grupo' e 'file' ausentes.");
+
+  try {
+    const buffer = fs.readFileSync(arquivo.tempFilePath || arquivo.data);
+    await sock.sendMessage(grupo, {
+      video: buffer,
+      mimetype: "video/mp4",
+      caption: legenda || ""
+    });
+    res.send("✅ Vídeo enviado com sucesso!");
+  } catch (err) {
+    console.error("❌ Erro ao enviar vídeo:", err);
+    res.status(500).send("Erro ao enviar vídeo.");
+  }
+});
+
+
+// 🖼️ Enviar imagem via URL
+app.post("/send-image", async (req, res) => {
+  if (!sock) return res.status(500).send("❌ WhatsApp não conectado.");
+  const { to, imageUrl, caption } = req.body;
+  if (!to || !imageUrl) return res.status(400).send("⚠️ Parâmetros 'to' e 'imageUrl' obrigatórios.");
+
+  try {
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const buffer = Buffer.from(response.data, 'binary');
+
+    await sock.sendMessage(to, {
+      image: buffer,
+      caption: caption || ""
+    });
+
+    res.send("✅ Imagem enviada com sucesso!");
+  } catch (err) {
+    console.error("❌ Erro ao enviar imagem:", err);
+    res.status(500).send("Erro ao enviar imagem.");
+  }
+});
+
+
+// 🧾 Listar grupos
+app.get("/groups", async (req, res) => {
+  if (!sock) return res.status(500).json({ error: "❌ WhatsApp não conectado." });
+
+  try {
+    const groups = await sock.groupFetchAllParticipating();
+    const lista = Object.values(groups).map(g => ({
+      id: g.id,
+      subject: g.subject
+    }));
+    res.json(lista);
+  } catch (err) {
+    console.error("❌ Erro ao listar grupos:", err);
+    res.status(500).json({ error: "Erro ao listar grupos." });
+  }
+});
+
+
+// 🚀 Inicia o servidor
+app.listen(port, () => {
+  console.log(`🟢 Servidor rodando na porta ${port}`);
 });
